@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scan Results - Stock Scanner</title>
+    <link href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='style.css') }}" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar navbar-dark bg-dark">
+        <div class="container">
+            <span class="navbar-brand mb-0 h1">
+                <i class="fas fa-rocket me-2"></i>Stock Scanner - Advanced Technical Analysis
+            </span>
+            <a href="{{ url_for('index') }}" class="btn btn-outline-light">
+                <i class="fas fa-upload me-2"></i>New Scan
+            </a>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h4 class="card-title mb-0">
+                            <i class="fas fa-chart-line me-2"></i>Scan Results
+                        </h4>
+                        <span class="badge bg-primary">{{ results|length }} of {{ total_symbols }} stocks passed</span>
+                    </div>
+                    <div class="card-body">
+                        {% if results %}
+                            <div class="alert alert-success">
+                                <i class="fas fa-check-circle me-2"></i>
+                                <strong>Success!</strong> Found {{ results|length }} stocks that meet all technical criteria.
+                            </div>
+                            
+                            <div class="table-responsive">
+                                <table class="table table-striped table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th><i class="fas fa-hashtag me-2"></i>Symbol</th>
+                                            <th><i class="fas fa-building me-2"></i>Name</th>
+                                            <th><i class="fas fa-rupee-sign me-2"></i>Current Price</th>
+                                            <th><i class="fas fa-chart-bar me-2"></i>Volume</th>
+                                            <th><i class="fas fa-check-circle me-2"></i>Status</th>
+                                            <th><i class="fas fa-tasks me-2"></i>Conditions Met</th>
+                                            {% if results[0].conditions_detail %}
+                                            <th><i class="fas fa-list me-2"></i>Details</th>
+                                            {% endif %}
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for stock in results %}
+                                        <tr>
+                                            <td>
+                                                <strong>{{ stock.symbol }}</strong>
+                                            </td>
+                                            <td>{{ stock.name }}</td>
+                                            <td>
+                                                <span class="badge bg-success">₹{{ stock.close_price }}</span>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-secondary">{{ "{:,}".format(stock.volume) if stock.volume else 'N/A' }}</span>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-success">
+                                                    <i class="fas fa-check me-1"></i>{{ stock.status }}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-info">
+                                                    {{ stock.conditions_met }}/{{ stock.total_conditions }}
+                                                </span>
+                                            </td>
+                                            {% if stock.conditions_detail %}
+                                            <td>
+                                                <button class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#details-{{ loop.index }}">
+                                                    <i class="fas fa-info-circle"></i> View
+                                                </button>
+                                            </td>
+                                            {% endif %}
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            
+                            <div class="mt-3">
+                                <div class="alert alert-info">
+                                    <h6><i class="fas fa-info-circle me-2"></i>What This Means:</h6>
+                                    <p class="mb-0">
+                                        These stocks have met all 15 technical conditions, indicating potential bullish momentum. 
+                                        The conditions include moving averages, volume analysis, RSI, ATR, MACD, Bollinger Bands, and support/resistance levels.
+                                        Consider these as candidates for further fundamental analysis and portfolio inclusion.
+                                    </p>
+                                </div>
+                            </div>
+                        {% else %}
+                            <div class="alert alert-warning">
+                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                <strong>No matches found.</strong> None of the {{ total_symbols }} scanned stocks met all technical criteria.
+                            </div>
+                            
+                            <div class="mt-3">
+                                <h6>Possible Reasons:</h6>
+                                <ul>
+                                    <li>Market conditions may not be favorable for the current setup</li>
+                                    <li>The criteria are very stringent (15 conditions must all be met)</li>
+                                    <li>Consider scanning a larger universe of stocks</li>
+                                    <li>Some stocks may have insufficient historical data</li>
+                                </ul>
+                            </div>
+                        {% endif %}
+                        
+                        <div class="mt-4">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="card bg-secondary">
+                                        <div class="card-body">
+                                            <h6 class="card-title">
+                                                <i class="fas fa-chart-bar me-2"></i>Scan Statistics
+                                            </h6>
+                                            <p class="card-text">
+                                                <strong>Total Symbols:</strong> {{ total_symbols }}<br>
+                                                <strong>Passed Filters:</strong> {{ results|length }}<br>
+                                                <strong>Success Rate:</strong> {{ "%.1f"|format((results|length / total_symbols * 100) if total_symbols > 0 else 0) }}%
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="card bg-secondary">
+                                        <div class="card-body">
+                                            <h6 class="card-title">
+                                                <i class="fas fa-clock me-2"></i>Scan Details
+                                            </h6>
+                                            <p class="card-text">
+                                                <strong>Scan Date:</strong> Just completed<br>
+                                                <strong>Data Source:</strong> Yahoo Finance + Alpha Vantage<br>
+                                                <strong>Lookback Period:</strong> 90 days<br>
+                                                <strong>Analysis:</strong> Full technical analysis
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% for stock in results %}
+        {% if stock.conditions_detail %}
+        <div class="modal fade" id="details-{{ loop.index }}" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">{{ stock.symbol }} - Condition Details</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <ul class="list-group">
+                            {% for condition_name, passed, details in stock.conditions_detail %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                {{ condition_name }}
+                                <span class="badge {% if passed %}bg-success{% else %}bg-danger{% endif %}">
+                                    {{ details }}
+                                </span>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    {% endfor %}
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

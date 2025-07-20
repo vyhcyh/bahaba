@@ -1,0 +1,55 @@
+Build a Python Flask web application that performs the following tasks:
+
+1. Create a web interface with:
+   - A file upload field to upload a CSV file containing a list of stock symbols (NSE/BSE format, first column only).
+   - A submit button to start the scan.
+   - A table to display matching stocks after scanning.
+
+2. When a CSV file is uploaded:
+   - Read the stock symbols.
+   - For each symbol, fetch historical OHLCV data (up to last 30–90 days) using any available API like yfinance, NSE India API, or Alpha Vantage.
+   - Calculate the following technical indicators:
+     - WMA(close,1), WMA(close,2), WMA(close,4), WMA(close,6), WMA(close,12), WMA(close,20)
+     - Weekly and Monthly versions of WMA using resampled data.
+     - ATR(5) and SMA(ATR(5), 10)
+     - SMA(Volume,5), SMA(Volume,20)
+     - RSI(14)
+     - EMA(close,8), EMA(close,21)
+     - Highest High and Lowest Low of last 5 days
+     - Daily close, Weekly volume
+     - Percentage change, candle color (red = close < open)
+   - Apply the following Rocket Base setup conditions:
+     - Daily WMA(close,1) > Monthly WMA(close,2) + 1
+     - Monthly WMA(close,2) > Monthly WMA(close,4) + 2
+     - Daily WMA(close,1) > Weekly WMA(close,6) + 2
+     - Weekly WMA(close,6) > Weekly WMA(close,12) + 2
+     - Daily WMA(close,1) > 4 days ago WMA(close,12) + 2
+     - Daily WMA(close,1) > 2 days ago WMA(close,20) + 2
+     - Daily Close > 25
+     - Daily Close <= 500
+     - Weekly Volume > 85000
+     - Daily ATR(5) < SMA(ATR(5),10)
+     - (Highest High of last 5 days - Lowest Low of last 5 days) / Lowest Low of last 5 days * 100 < 10
+     - SMA(Volume,5) < SMA(Volume,20)
+     - No red candle in last 5 days with close < open and % change < -2%
+     - RSI(14) > 60
+     - Daily Close > EMA(close,8)
+     - Daily Close > EMA(close,21)
+     - Today's Close >= Highest High of last 5 days * 0.99
+
+3. If a stock passes all the above filters, display it in the results table with its name and a "Passed" status.
+
+4. Use `pandas-ta` or `ta` for technical indicator calculations.
+
+5. Make sure the app runs fully on Replit using `Flask` and shows all outputs in the browser.
+
+6. Dependencies should include:
+   - Flask
+   - pandas
+   - numpy
+   - yfinance (or NSE API)
+   - ta or pandas-ta
+   - plotly (optional for charting)
+
+7. Also include error handling if data fetch fails or stock doesn't have enough data.
+

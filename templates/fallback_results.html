@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scan Results - {{ session.filename }}</title>
+    <link href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="/static/style.css" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar navbar-dark bg-dark">
+        <div class="container">
+            <span class="navbar-brand mb-0 h1">
+                <i class="fas fa-rocket me-2"></i>Stock Scanner Results
+            </span>
+            <div class="navbar-nav d-flex flex-row">
+                <a class="nav-link me-3" href="{{ url_for('index') }}">
+                    <i class="fas fa-home me-1"></i>Dashboard
+                </a>
+                <a class="nav-link" href="{{ url_for('scan_history') }}">
+                    <i class="fas fa-history me-1"></i>History
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            <i class="fas fa-chart-line me-2"></i>Scan Results: {{ session.filename }}
+                        </h5>
+                        <div class="d-flex gap-2">
+                            <span class="badge bg-success fs-6">
+                                {{ results|length }} stocks passed
+                            </span>
+                            <span class="badge bg-secondary fs-6">
+                                {{ session.processed_symbols }} total processed
+                            </span>
+                            <span class="badge bg-info fs-6">
+                                {% if session.processed_symbols > 0 %}
+                                    {{ "%.1f"|format((session.passed_symbols / session.processed_symbols) * 100) }}% success rate
+                                {% else %}
+                                    0% success rate
+                                {% endif %}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        {% if results %}
+                            <div class="table-responsive">
+                                <table class="table table-dark table-striped table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th scope="col">#</th>
+                                            <th scope="col">
+                                                <i class="fas fa-tag me-1"></i>Symbol
+                                            </th>
+                                            <th scope="col">
+                                                <i class="fas fa-building me-1"></i>Name
+                                            </th>
+                                            <th scope="col">
+                                                <i class="fas fa-rupee-sign me-1"></i>Price
+                                            </th>
+                                            <th scope="col">
+                                                <i class="fas fa-chart-bar me-1"></i>Volume
+                                            </th>
+                                            <th scope="col">
+                                                <i class="fas fa-calendar me-1"></i>Data Points
+                                            </th>
+                                            <th scope="col">
+                                                <i class="fas fa-check-circle me-1"></i>Conditions
+                                            </th>
+                                            <th scope="col">
+                                                <i class="fas fa-clock me-1"></i>Scanned
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for result in results %}
+                                            <tr>
+                                                <td>{{ loop.index }}</td>
+                                                <td>
+                                                    <strong>{{ result.symbol_original }}</strong>
+                                                </td>
+                                                <td>
+                                                    <small class="text-muted">{{ result.stock_name }}</small>
+                                                </td>
+                                                <td>
+                                                    <span class="text-success">
+                                                        ₹{{ "%.2f"|format(result.close_price) }}
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <span class="text-info">
+                                                        {{ "{:,}".format(result.volume|int) }}
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <span class="badge bg-primary">
+                                                        {{ result.data_points }} days
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <span class="badge bg-success">
+                                                        <i class="fas fa-check me-1"></i>{{ result.conditions_met }}/{{ result.total_conditions }}
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <small class="text-muted">
+                                                        {{ result.created_at[:19].replace('T', ' ') }}
+                                                    </small>
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        {% else %}
+                            <div class="text-center py-5">
+                                <i class="fas fa-search fa-3x text-muted mb-3"></i>
+                                <h4 class="text-muted">No stocks passed the screening criteria</h4>
+                                <p class="text-muted">
+                                    Out of {{ session.processed_symbols }} stocks processed, none met the technical analysis requirements.
+                                </p>
+                                <a href="{{ url_for('index') }}" class="btn btn-primary">
+                                    <i class="fas fa-upload me-2"></i>Try Another File
+                                </a>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="row mt-4">
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="card-header">
+                                <h6><i class="fas fa-info-circle me-2"></i>Session Details</h6>
+                            </div>
+                            <div class="card-body">
+                                <p class="mb-1"><strong>Session ID:</strong> <small class="text-muted">{{ session.id }}</small></p>
+                                <p class="mb-1"><strong>File:</strong> {{ session.filename }}</p>
+                                <p class="mb-1"><strong>Status:</strong> 
+                                    {% if session.status == 'completed' %}
+                                        <span class="badge bg-success">Completed</span>
+                                    {% else %}
+                                        <span class="badge bg-warning">{{ session.status.title() }}</span>
+                                    {% endif %}
+                                </p>
+                                <p class="mb-0"><strong>Started:</strong> {{ session.created_at[:19].replace('T', ' ') }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="card-header">
+                                <h6><i class="fas fa-chart-pie me-2"></i>Processing Stats</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-6">
+                                        <div class="text-center">
+                                            <h3 class="text-primary">{{ session.total_symbols }}</h3>
+                                            <small class="text-muted">Total Symbols</small>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="text-center">
+                                            <h3 class="text-info">{{ session.processed_symbols }}</h3>
+                                            <small class="text-muted">Processed</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                <hr>
+                                <div class="row">
+                                    <div class="col-6">
+                                        <div class="text-center">
+                                            <h3 class="text-success">{{ session.passed_symbols }}</h3>
+                                            <small class="text-muted">Passed</small>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="text-center">
+                                            <h3 class="text-danger">{{ session.processed_symbols - session.passed_symbols }}</h3>
+                                            <small class="text-muted">Failed</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="card-header">
+                                <h6><i class="fas fa-memory me-2"></i>Storage Info</h6>
+                            </div>
+                            <div class="card-body">
+                                <p class="card-text">
+                                    <strong>Storage:</strong> In-memory (temporary)<br>
+                                    <strong>Results:</strong> Session-based storage<br>
+                                    <strong>Backup:</strong> Results lost on restart<br>
+                                    <strong>Upgrade:</strong> Supabase available
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="text-center mt-4">
+                    <a href="{{ url_for('index') }}" class="btn btn-primary me-2">
+                        <i class="fas fa-upload me-2"></i>Upload Another File
+                    </a>
+                    <a href="{{ url_for('scan_history') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-history me-2"></i>View All History
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
